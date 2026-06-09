@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}账号管理 - 聊天室{% endblock %}
+
+{% block content %}
+<div class="account-container">
+    <h1 class="page-title">⚙️ 账号管理</h1>
+
+    <div class="account-info card">
+        <h2>账号信息</h2>
+        <div class="info-row">
+            <span class="info-label">用户名：</span>
+            <span class="info-value">{{ user.username }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">注册时间：</span>
+            <span class="info-value">{{ user.created_at.strftime('%Y-%m-%d %H:%M') if user.created_at else '未知' }}</span>
+        </div>
+    </div>
+
+    <!-- Change Password -->
+    <div class="card">
+        <h2>修改密码</h2>
+        <form id="change-password-form" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+            <div class="form-group">
+                <label for="current-password">当前密码</label>
+                <input type="password" id="current-password" name="current_password"
+                       placeholder="输入当前密码" autocomplete="current-password" required>
+                <span class="form-error" id="current-password-error"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="new-password">新密码</label>
+                <input type="password" id="new-password" name="new_password"
+                       placeholder="至少8位，包含至少3种字符类型"
+                       minlength="8" maxlength="128" autocomplete="new-password" required>
+                <div class="password-strength">
+                    <div class="strength-bar" id="strength-bar-change"></div>
+                </div>
+                <span class="form-hint" id="strength-text-change">密码强度</span>
+                <span class="form-error" id="new-password-error"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="new-password-confirm">确认新密码</label>
+                <input type="password" id="new-password-confirm" name="new_password_confirm"
+                       placeholder="再次输入新密码"
+                       minlength="8" maxlength="128" autocomplete="new-password" required>
+                <span class="form-error" id="new-password-confirm-error"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary">修改密码</button>
+        </form>
+        <div class="form-message" id="password-message"></div>
+    </div>
+
+    <!-- Delete Account -->
+    <div class="card card-danger">
+        <h2>注销账号</h2>
+        <p class="danger-text">⚠️ 此操作不可撤销。注销后，您的所有消息和文件将被保留但账号无法再登录。</p>
+        <form id="delete-account-form" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+            <div class="form-group">
+                <label for="delete-password">输入密码以确认</label>
+                <input type="password" id="delete-password" name="password"
+                       placeholder="输入当前密码以确认注销"
+                       autocomplete="current-password" required>
+                <span class="form-error" id="delete-password-error"></span>
+            </div>
+
+            <button type="submit" class="btn btn-danger">确认注销账号</button>
+        </form>
+        <div class="form-message" id="delete-message"></div>
+    </div>
+
+    <!-- Logout -->
+    <div class="card">
+        <h2>退出登录</h2>
+        <button id="logout-btn" class="btn btn-secondary">退出当前登录</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/account.js') }}"></script>
+{% endblock %}

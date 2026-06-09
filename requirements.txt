@@ -1,0 +1,13 @@
+Flask==3.1.2
+flask-socketio==5.5.1
+flask-limiter==3.10.1
+PyMySQL==1.1.1
+argon2-cffi==25.1.0
+bleach==6.3.0
+python-magic==0.4.27
+requests==2.32.4
+cryptography==45.0.7
+python-dotenv==1.1.1
+python-docx==1.2.0
+gevent==24.11.1
+gunicorn==23.0.0

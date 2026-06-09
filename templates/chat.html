@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}聊天室{% endblock %}
+
+{% block head_extra %}
+<script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+    <!-- Sidebar -->
+    <aside class="chat-sidebar">
+        <div class="sidebar-header">
+            <h2>💬 聊天室</h2>
+        </div>
+        <div class="room-list">
+            <div class="room-item active" data-room="general">
+                <span class="room-icon">#</span> 大厅
+            </div>
+        </div>
+        <div class="online-users">
+            <h3>在线用户</h3>
+            <ul id="online-users-list">
+                <li class="user-item" id="user-self">
+                    <span class="online-dot"></span>
+                    {{ session.username }} (你)
+                </li>
+            </ul>
+        </div>
+        <div class="sidebar-footer">
+            <span id="connection-status" class="status-connected">🟢 已连接</span>
+        </div>
+    </aside>
+
+    <!-- Main Chat Area -->
+    <div class="chat-main">
+        <div class="chat-header">
+            <h2># 大厅</h2>
+            <span class="typing-indicator" id="typing-indicator"></span>
+        </div>
+
+        <div class="chat-messages" id="chat-messages">
+            <div class="message-system">
+                <span>欢迎来到聊天室！请文明交流。</span>
+            </div>
+        </div>
+
+        <!-- File upload progress bar -->
+        <div class="upload-progress" id="upload-progress" style="display:none;">
+            <div class="progress-info">
+                <span id="upload-filename"></span>
+                <span id="upload-percent">0%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+        </div>
+
+        <div class="chat-input-area">
+            <!-- File upload button -->
+            <button type="button" class="btn-icon" id="file-upload-btn" title="发送文件">
+                📎
+            </button>
+            <input type="file" id="file-input" style="display:none;">
+
+            <!-- Text input -->
+            <textarea id="message-input"
+                      placeholder="输入消息... (Enter 发送, Shift+Enter 换行)"
+                      rows="1" maxlength="10000"></textarea>
+
+            <!-- Send button -->
+            <button type="button" class="btn btn-primary" id="send-btn">发送</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+{% endblock %}

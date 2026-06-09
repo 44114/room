@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>{% block title %}聊天室{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block head_extra %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="/" class="nav-brand">💬 聊天室</a>
+            <div class="nav-links">
+                {% if session.user_id %}
+                    <a href="/chat" class="nav-link">聊天</a>
+                    <a href="/auth/account" class="nav-link">账号管理</a>
+                    <span class="nav-user">{{ session.username }}</span>
+                    <a href="#" class="nav-link nav-logout" id="nav-logout">退出</a>
+                {% else %}
+                    <a href="/auth/login" class="nav-link">登录</a>
+                    <a href="/auth/register" class="nav-link">注册</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="footer">
+        <p>&copy; 2026 聊天室 - 安全即时通讯</p>
+    </footer>
+
+    <!-- Global CSRF token for all AJAX requests -->
+    <meta name="csrf-token" content="{{ session.csrf_token or '' }}">
+
+    <script>
+        // Global CSRF token injection for all fetch/XHR requests
+        const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content || '';
+
+        // Helper to include CSRF token in all requests
+        async function apiFetch(url, options = {}) {
+            options.headers = options.headers || {};
+            options.headers['X-CSRF-Token'] = CSRF_TOKEN;
+            if (options.body && typeof options.body === 'string') {
+                try {
+                    const parsed = JSON.parse(options.body);
+                    parsed.csrf_token = CSRF_TOKEN;
+                    options.body = JSON.stringify(parsed);
+                } catch(e) {}
+            }
+            return fetch(url, options);
+        }
+
+        // Logout handler
+        document.getElementById('nav-logout')?.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const resp = await apiFetch('/auth/logout', { method: 'POST' });
+            const data = await resp.json();
+            if (data.redirect) {
+                window.location.href = data.redirect;
+            }
+        });
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}登录 - 聊天室{% endblock %}
+
+{% block head_extra %}
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <h1 class="auth-title">🔑 登录</h1>
+        <p class="auth-subtitle">欢迎回来</p>
+
+        <form id="login-form" class="auth-form" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+            <div class="form-group">
+                <label for="username">用户名</label>
+                <input type="text" id="username" name="username"
+                       placeholder="输入用户名"
+                       autocomplete="username" required>
+                <span class="form-error" id="username-error"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="password">密码</label>
+                <div class="password-wrapper">
+                    <input type="password" id="password" name="password"
+                           placeholder="输入密码"
+                           autocomplete="current-password" required>
+                    <button type="button" class="toggle-password" tabindex="-1"
+                            aria-label="显示/隐藏密码">👁️</button>
+                </div>
+                <span class="form-error" id="password-error"></span>
+            </div>
+
+            <div class="form-group form-check">
+                <label class="check-label">
+                    <input type="checkbox" name="remember_me" value="1">
+                    <span>记住我（30天）</span>
+                </label>
+            </div>
+
+            <div class="form-group turnstile-group">
+                <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}"
+                     data-callback="onTurnstileSuccess"
+                     data-expired-callback="onTurnstileExpired"
+                     data-error-callback="onTurnstileError">
+                </div>
+                <span class="form-error" id="turnstile-error"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block" id="submit-btn" disabled>
+                登录
+            </button>
+        </form>
+
+        <p class="auth-switch">
+            没有账号？<a href="{{ url_for('auth.register_page') }}">立即注册</a>
+        </p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+{% endblock %}

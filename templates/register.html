@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}注册 - 聊天室{% endblock %}
+
+{% block head_extra %}
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <h1 class="auth-title">📝 创建账号</h1>
+        <p class="auth-subtitle">加入我们的聊天社区</p>
+
+        <form id="register-form" class="auth-form" novalidate>
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+            <div class="form-group">
+                <label for="username">用户名</label>
+                <input type="text" id="username" name="username"
+                       placeholder="3-30位字母、数字或下划线"
+                       minlength="3" maxlength="30" pattern="[a-zA-Z0-9_]{3,30}"
+                       autocomplete="username" required>
+                <span class="form-hint">支持字母、数字和下划线</span>
+                <span class="form-error" id="username-error"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="password">密码</label>
+                <div class="password-wrapper">
+                    <input type="password" id="password" name="password"
+                           placeholder="至少8位，包含至少3种字符类型"
+                           minlength="8" maxlength="128"
+                           autocomplete="new-password" required>
+                    <button type="button" class="toggle-password" tabindex="-1"
+                            aria-label="显示/隐藏密码">👁️</button>
+                </div>
+                <div class="password-strength">
+                    <div class="strength-bar" id="strength-bar"></div>
+                </div>
+                <span class="form-hint" id="strength-text">密码强度</span>
+                <span class="form-error" id="password-error"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="password-confirm">确认密码</label>
+                <input type="password" id="password-confirm" name="password_confirm"
+                       placeholder="再次输入密码"
+                       minlength="8" maxlength="128"
+                       autocomplete="new-password" required>
+                <span class="form-error" id="password-confirm-error"></span>
+            </div>
+
+            <div class="form-group">
+                <label for="invite-code">邀请码</label>
+                <input type="text" id="invite-code" name="invite_code"
+                       placeholder="请输入邀请码"
+                       autocomplete="off" required>
+                <span class="form-error" id="invite-code-error"></span>
+            </div>
+
+            <div class="form-group turnstile-group">
+                <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}"
+                     data-callback="onTurnstileSuccess"
+                     data-expired-callback="onTurnstileExpired"
+                     data-error-callback="onTurnstileError">
+                </div>
+                <span class="form-error" id="turnstile-error"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block" id="submit-btn" disabled>
+                注册
+            </button>
+        </form>
+
+        <p class="auth-switch">
+            已有账号？<a href="{{ url_for('auth.login_page') }}">立即登录</a>
+        </p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+{% endblock %}
