@@ -59,7 +59,7 @@ brew install python mysql libmagic
 
 ```bash
 # 1. Clone the repository
-git clone <repo-url> chatroom && cd chatroom
+git clone https://github.com/44114/room.git && cd room
 
 # 2. Create virtual environment and install dependencies
 python3 -m venv venv
@@ -251,7 +251,7 @@ sudo apt install -y python3 python3-pip python3-venv mysql-server libmagic1
 
 ```bash
 # 1. 克隆仓库
-git clone <repo-url> chatroom && cd chatroom
+git clone https://github.com/44114/room.git && cd room
 
 # 2. 创建虚拟环境并安装依赖
 python3 -m venv venv
@@ -353,7 +353,7 @@ sudo apt install -y python3 python3-pip python3-venv mysql-server libmagic1
 
 ```bash
 # 1. 複製儲存庫
-git clone <repo-url> chatroom && cd chatroom
+git clone https://github.com/44114/room.git && cd room
 
 # 2. 建立虛擬環境並安裝依賴
 python3 -m venv venv
