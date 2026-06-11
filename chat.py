@@ -24,11 +24,12 @@ socketio: SocketIO = None
 
 
 def init_socketio(app):
-    """Initialize SocketIO with the Flask app."""
-    global socketio
+    """Initialize SocketIO with the Flask app.
 
-    import gevent.monkey
-    gevent.monkey.patch_all()
+    Caller must have already called gevent.monkey.patch_all() before importing
+    this module (see app.py).
+    """
+    global socketio
 
     socketio = SocketIO(
         app,

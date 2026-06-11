@@ -9,6 +9,10 @@ Usage:
     python app.py
 """
 
+# !! Monkey-patch must happen BEFORE any other imports that touch ssl/socket !!
+from gevent.monkey import patch_all
+patch_all()
+
 import logging
 import os
 import sys
@@ -20,7 +24,7 @@ from models import init_db
 from middleware import setup_security_headers, setup_csrf, rate_limit_config
 from auth import auth_bp
 from files import files_bp
-from chat import init_socketio, socketio
+from chat import init_socketio
 
 # --- Logging ---
 
@@ -83,7 +87,7 @@ def create_app() -> Flask:
     def index():
         """Redirect to chat if logged in, otherwise to login."""
         if session.get("user_id"):
-            return redirect(url_for("chat.chat_page"))
+            return redirect(url_for("chat_page"))
         return redirect(url_for("auth.login_page"))
 
     @app.route("/chat")
@@ -136,7 +140,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     # Initialize SocketIO
-    init_socketio(app)
+    socketio = init_socketio(app)
 
     logger.info("聊天室服务启动在 http://%s:%d", Config.HOST, Config.PORT)
 

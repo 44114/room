@@ -86,12 +86,105 @@ python app.py
 
 The application will start at **http://0.0.0.0:9888**.
 
-### Production Deployment (gunicorn)
+### Production Deployment
+
+> **Do not expose Flask directly to the internet.** Always use a reverse proxy with HTTPS in production.
+
+#### Option A: Nginx + Let's Encrypt (Recommended)
+
+**Step 1 — Run the app with gunicorn (background service)**
 
 ```bash
 source venv/bin/activate
-gunicorn -k gevent -w 4 -b 0.0.0.0:9888 app:create_app()
+gunicorn -k gevent -w 4 -b 127.0.0.1:9888 app:create_app()
 ```
+
+Create a systemd service file `/etc/systemd/system/chatroom.service`:
+
+```ini
+[Unit]
+Description=Chat Room
+After=network.target mysql.service
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/opt/chatroom
+EnvironmentFile=/opt/chatroom/.env
+ExecStart=/opt/chatroom/venv/bin/gunicorn -k gevent -w 4 -b 127.0.0.1:9888 app:create_app()
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now chatroom
+```
+
+**Step 2 — Configure Nginx as a reverse proxy with HTTPS**
+
+```bash
+sudo apt install -y nginx certbot python3-certbot-nginx
+```
+
+Create `/etc/nginx/sites-available/chatroom`:
+
+```nginx
+server {
+    listen 80;
+    server_name chat.example.com;
+    return 301 https://$host$request_uri;   # Force HTTPS
+}
+
+server {
+    listen 443 ssl http2;
+    server_name chat.example.com;
+
+    # Let's Encrypt certificates (auto-managed by certbot)
+    ssl_certificate     /etc/letsencrypt/live/chat.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/chat.example.com/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256;
+
+    # Required for large file uploads
+    client_max_body_size 5200m;
+
+    # Proxy to Flask app
+    location / {
+        proxy_pass http://127.0.0.1:9888;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 86400;
+    }
+}
+```
+
+```bash
+sudo ln -s /etc/nginx/sites-available/chatroom /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+
+# Obtain and auto-renew HTTPS certificate
+sudo certbot --nginx -d chat.example.com
+sudo systemctl enable certbot.timer
+```
+
+**Step 3 — Update your `.env`**
+
+```bash
+SESSION_COOKIE_SECURE=True   # Only send cookies over HTTPS
+```
+
+> **Important:** Once behind HTTPS, set `SESSION_COOKIE_SECURE=True` in `.env` so session cookies are never transmitted over plain HTTP. All WebSocket connections will automatically upgrade to `wss://`.
+>
+> If Cloudflare is used as a CDN in front, ensure the SSL/TLS mode is set to **Full (strict)** and enable **WebSocket** support in the Network settings.
 
 ## ⚙️ Environment Variables
 
@@ -303,6 +396,92 @@ python app.py
 | **会话劫持** | HttpOnly + SameSite Cookie + 登录重建会话 + 30分钟超时 |
 | **RCE** | 禁用 eval()/exec() + 文件存于 Web 根外 |
 
+## 🚀 生产环境部署
+
+> **不要直接将 Flask 暴露到公网。** 生产环境务必使用反向代理并启用 HTTPS。
+
+### Nginx + Let's Encrypt 配置 (推荐)
+
+**第一步 — 使用 gunicorn 后台运行应用**
+
+```bash
+source venv/bin/activate
+gunicorn -k gevent -w 4 -b 127.0.0.1:9888 app:create_app()
+```
+
+建议创建 systemd 服务以实现开机自启和进程守护：
+
+```ini
+[Unit]
+Description=Chat Room
+After=network.target mysql.service
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/opt/chatroom
+EnvironmentFile=/opt/chatroom/.env
+ExecStart=/opt/chatroom/venv/bin/gunicorn -k gevent -w 4 -b 127.0.0.1:9888 app:create_app()
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+**第二步 — 配置 Nginx 反向代理 + HTTPS**
+
+```bash
+sudo apt install -y nginx certbot python3-certbot-nginx
+```
+
+```nginx
+server {
+    listen 80;
+    server_name chat.example.com;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name chat.example.com;
+
+    ssl_certificate     /etc/letsencrypt/live/chat.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/chat.example.com/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256;
+
+    client_max_body_size 5200m;
+
+    location / {
+        proxy_pass http://127.0.0.1:9888;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 86400;
+    }
+}
+```
+
+```bash
+sudo ln -s /etc/nginx/sites-available/chatroom /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+sudo certbot --nginx -d chat.example.com
+```
+
+**第三步 — 更新 `.env` 配置**
+
+```bash
+SESSION_COOKIE_SECURE=True
+```
+
+> **重要：** 启用 HTTPS 后必须设置 `SESSION_COOKIE_SECURE=True`。WebSocket 会自动升级为 `wss://`。
+> 如使用 Cloudflare CDN，请将 SSL/TLS 模式设为 **Full (strict)** 并启用 WebSocket。
+
 ---
 
 <a id="繁體中文"></a>
@@ -404,6 +583,92 @@ python app.py
 | **檔案上傳攻擊** | Magic bytes MIME 驗證 + 指令碼掃描 + UUID 命名 + 副檔名黑名單 |
 | **工作階段劫持** | HttpOnly + SameSite Cookie + 登入重建工作階段 + 30分鐘逾時 |
 | **RCE** | 禁用 eval()/exec() + 檔案存於 Web 根外 |
+
+## 🚀 生產環境部署
+
+> **不要直接將 Flask 暴露到公網。** 生產環境務必使用反向代理並啟用 HTTPS。
+
+### Nginx + Let's Encrypt 配置 (推薦)
+
+**第一步 — 使用 gunicorn 背景執行應用**
+
+```bash
+source venv/bin/activate
+gunicorn -k gevent -w 4 -b 127.0.0.1:9888 app:create_app()
+```
+
+建議建立 systemd 服務以實現開機自啟和處理序守護：
+
+```ini
+[Unit]
+Description=Chat Room
+After=network.target mysql.service
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/opt/chatroom
+EnvironmentFile=/opt/chatroom/.env
+ExecStart=/opt/chatroom/venv/bin/gunicorn -k gevent -w 4 -b 127.0.0.1:9888 app:create_app()
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+**第二步 — 配置 Nginx 反向代理 + HTTPS**
+
+```bash
+sudo apt install -y nginx certbot python3-certbot-nginx
+```
+
+```nginx
+server {
+    listen 80;
+    server_name chat.example.com;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name chat.example.com;
+
+    ssl_certificate     /etc/letsencrypt/live/chat.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/chat.example.com/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256;
+
+    client_max_body_size 5200m;
+
+    location / {
+        proxy_pass http://127.0.0.1:9888;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 86400;
+    }
+}
+```
+
+```bash
+sudo ln -s /etc/nginx/sites-available/chatroom /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+sudo certbot --nginx -d chat.example.com
+```
+
+**第三步 — 更新 `.env` 配置**
+
+```bash
+SESSION_COOKIE_SECURE=True
+```
+
+> **重要：** 啟用 HTTPS 後必須設定 `SESSION_COOKIE_SECURE=True`。WebSocket 會自動升級為 `wss://`。
+> 如使用 Cloudflare CDN，請將 SSL/TLS 模式設為 **Full (strict)** 並啟用 WebSocket。
 
 ---
 
