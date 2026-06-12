@@ -82,3 +82,9 @@ config.local.py
 # 备份文件
 *.bak
 *.sql.gz
+
+# Android 客户端（独立项目，不参与后端版本控制）
+android-room/
+
+# 管理面板（独立项目，不参与后端版本控制）
+room-admin/

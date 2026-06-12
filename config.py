@@ -29,6 +29,13 @@ class Config:
     # Invite code — raw value from env, stored as Argon2id hash in DB
     INVITE_CODE: str = os.environ.get("INVITE_CODE", "changeme")
 
+    # Mobile clients have poor Turnstile pass rates due to WebView fingerprinting.
+    # Since invite codes already provide a strong anti-bot gate, Turnstile can
+    # be exempted for mobile clients. Set to True to enforce Turnstile on mobile too.
+    TURNSTILE_REQUIRED_FOR_MOBILE: bool = os.environ.get(
+        "TURNSTILE_REQUIRED_FOR_MOBILE", "0"
+    ) == "1"
+
     # Session security
     SESSION_COOKIE_SECURE: bool = False  # HTTP, not HTTPS
     SESSION_COOKIE_HTTPONLY: bool = True

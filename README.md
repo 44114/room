@@ -290,6 +290,13 @@ See [`schema.sql`](schema.sql) for the full DDL. Five tables:
 | `files` | Uploaded file metadata |
 | `sessions` | Persistent sessions ("Remember Me") |
 
+## 🔗 Related Projects
+
+| Project | Description |
+|---------|-------------|
+| [Android Client](https://github.com/44114/android-room) | Native Android app — chat, file sharing, account management |
+| [Admin Panel](https://github.com/44114/room-admin) | Web-based admin dashboard — manage users, messages, files |
+
 ## 📄 License
 
 This project is provided for educational and personal use.
@@ -482,6 +489,13 @@ SESSION_COOKIE_SECURE=True
 > **重要：** 启用 HTTPS 后必须设置 `SESSION_COOKIE_SECURE=True`。WebSocket 会自动升级为 `wss://`。
 > 如使用 Cloudflare CDN，请将 SSL/TLS 模式设为 **Full (strict)** 并启用 WebSocket。
 
+## 🔗 关联项目
+
+| 项目 | 说明 |
+|------|------|
+| [Android 客户端](https://github.com/44114/android-room) | 原生 Android App — 聊天、文件分享、账号管理 |
+| [管理面板](https://github.com/44114/room-admin) | Web 管理后台 — 管理用户、消息、文件 |
+
 ---
 
 <a id="繁體中文"></a>
@@ -669,6 +683,13 @@ SESSION_COOKIE_SECURE=True
 
 > **重要：** 啟用 HTTPS 後必須設定 `SESSION_COOKIE_SECURE=True`。WebSocket 會自動升級為 `wss://`。
 > 如使用 Cloudflare CDN，請將 SSL/TLS 模式設為 **Full (strict)** 並啟用 WebSocket。
+
+## 🔗 關聯專案
+
+| 專案 | 說明 |
+|------|------|
+| [Android 用戶端](https://github.com/44114/android-room) | 原生 Android App — 聊天、檔案分享、帳號管理 |
+| [管理面板](https://github.com/44114/room-admin) | Web 管理後台 — 管理使用者、訊息、檔案 |
 
 ---
 

@@ -81,6 +81,22 @@ def create_app() -> Flask:
     def too_large(e):
         return {"error": "请求体过大。"}, 413
 
+    # --- Public Config Endpoint (for mobile/third-party clients) ---
+
+    @app.route("/config")
+    def public_config():
+        """Return non-sensitive configuration needed by clients.
+        The Turnstile site key IS public — it appears in the web page HTML.
+        The secret key remains server-side only, never exposed."""
+        from flask import jsonify
+        return jsonify({
+            "turnstile_site_key": Config.TURNSTILE_SITE_KEY,
+            "turnstile_required_for_mobile": Config.TURNSTILE_REQUIRED_FOR_MOBILE,
+            "max_file_size": Config.MAX_FILE_SIZE,
+            "chunk_size": Config.CHUNK_SIZE,
+            "allowed_mimetypes": sorted(Config.ALLOWED_MIMETYPES),
+        })
+
     # --- Main Routes ---
 
     @app.route("/")

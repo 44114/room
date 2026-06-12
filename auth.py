@@ -33,6 +33,26 @@ logger = logging.getLogger(__name__)
 auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 
 
+# --- Helper ---
+
+def _is_mobile_client() -> bool:
+    """Check if the request is from the mobile app."""
+    return request.headers.get("X-Client-Type", "").lower() == "android"
+
+
+def _should_verify_turnstile() -> bool:
+    """Determine whether Turnstile should be enforced for this request.
+
+    Mobile clients (Android) have poor Turnstile pass rates due to
+    WebView fingerprinting differences. Since invite codes already
+    provide a strong anti-bot gate, Turnstile can be exempted for
+    mobile clients unless explicitly required by server config.
+    """
+    if _is_mobile_client() and not Config.TURNSTILE_REQUIRED_FOR_MOBILE:
+        return False
+    return True
+
+
 # --- Page Routes ---
 
 
@@ -117,17 +137,18 @@ def register():
     if not invite_code:
         errors.append("请输入邀请码。")
 
-    if not turnstile_token:
-        errors.append("请完成人机验证。")
+    if _should_verify_turnstile():
+        if not turnstile_token:
+            errors.append("请完成人机验证。")
 
     if errors:
         return jsonify({"error": "；".join(errors)}), 400
 
-    # Verify Turnstile
-    if not verify_turnstile(turnstile_token, request.remote_addr):
-        # Check if using test keys — if so, allow through
-        if "1x00000000000000000000AA" not in Config.TURNSTILE_SITE_KEY:
-            return jsonify({"error": "人机验证失败，请重试。"}), 400
+    # Verify Turnstile (skipped for mobile unless TURNSTILE_REQUIRED_FOR_MOBILE=true)
+    if _should_verify_turnstile():
+        if not verify_turnstile(turnstile_token, request.remote_addr):
+            if "1x00000000000000000000AA" not in Config.TURNSTILE_SITE_KEY:
+                return jsonify({"error": "人机验证失败，请重试。"}), 400
 
     # Verify invite code and create user in a single transaction
     # to prevent race conditions on invite code usage
@@ -206,16 +227,19 @@ def login():
         errors.append("请输入用户名。")
     if not password:
         errors.append("请输入密码。")
-    if not turnstile_token:
-        errors.append("请完成人机验证。")
+
+    if _should_verify_turnstile():
+        if not turnstile_token:
+            errors.append("请完成人机验证。")
 
     if errors:
         return jsonify({"error": "；".join(errors)}), 400
 
-    # Verify Turnstile
-    if not verify_turnstile(turnstile_token, request.remote_addr):
-        if "1x00000000000000000000AA" not in Config.TURNSTILE_SITE_KEY:
-            return jsonify({"error": "人机验证失败，请重试。"}), 400
+    # Verify Turnstile (skipped for mobile unless TURNSTILE_REQUIRED_FOR_MOBILE=true)
+    if _should_verify_turnstile():
+        if not verify_turnstile(turnstile_token, request.remote_addr):
+            if "1x00000000000000000000AA" not in Config.TURNSTILE_SITE_KEY:
+                return jsonify({"error": "人机验证失败，请重试。"}), 400
 
     # Rate limiting: delay response to slow brute force
     import time
@@ -379,7 +403,7 @@ def check():
 
 
 def _verify_invite_code(code: str) -> bool:
-    """Verify an invite code by checking against stored Argon2id hashes."""
+    """Verify an invite code by comparing against stored Argon2id hashes."""
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
@@ -406,7 +430,6 @@ def _create_session(user_id: int, username: str, request, remember: bool = False
 
     if remember:
         session.permanent = True
-        # Store session in DB for remember-me
         _persist_session(user_id, session["csrf_token"], request)
     else:
         session.permanent = False
