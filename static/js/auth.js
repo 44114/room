@@ -300,8 +300,15 @@
                 }
             } catch (err) {
                 console.error('Auth request failed:', err);
-                // Show the actual error message instead of a generic one
-                var msg = (err && err.message) ? err.message : '网络错误，请稍后重试。';
+                var msg;
+                if (err && err.name === 'AbortError') {
+                    msg = '请求超时 — 服务器无响应，请检查服务器是否正常运行 (http://' +
+                          window.location.hostname + ':9888)。';
+                } else if (err && err.message) {
+                    msg = err.message;
+                } else {
+                    msg = '网络错误，请稍后重试。';
+                }
                 alert(msg);
             } finally {
                 disableForm(false);

@@ -4,40 +4,58 @@
  */
 
 // Read CSRF token from the <meta> tag rendered by the server
-var CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content || '';
+var CSRF_TOKEN = '';
+(function () {
+    var meta = document.querySelector('meta[name="csrf-token"]');
+    if (meta) { CSRF_TOKEN = meta.getAttribute('content') || ''; }
+})();
 
 /**
  * Fetch wrapper that auto-injects the CSRF token into every request.
  * Use this instead of raw fetch() for all API calls.
+ *
+ * Includes a 15-second timeout so the UI never hangs indefinitely.
  */
-async function apiFetch(url, options) {
+function apiFetch(url, options) {
     options = options || {};
     options.headers = options.headers || {};
     options.headers['X-CSRF-Token'] = CSRF_TOKEN;
 
-    // Also inject into JSON body for routes that expect form data
+    // Inject CSRF token into JSON body too (belt-and-suspenders)
     if (options.body && typeof options.body === 'string') {
         try {
             var parsed = JSON.parse(options.body);
             parsed.csrf_token = CSRF_TOKEN;
             options.body = JSON.stringify(parsed);
-        } catch (e) { /* body is not JSON, leave as-is */ }
+        } catch (e) { /* body is not JSON */ }
     }
 
-    return fetch(url, options);
+    // 15-second timeout — prevents the form from hanging forever
+    // if the server is unreachable or stuck
+    var controller = new AbortController();
+    options.signal = controller.signal;
+    var timeoutId = setTimeout(function () {
+        controller.abort();
+    }, 15000);  // 15 seconds
+
+    return fetch(url, options).finally(function () {
+        clearTimeout(timeoutId);
+    });
 }
 
 // ── Global logout handler ────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function () {
     var logoutBtn = document.getElementById('nav-logout');
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', async function (e) {
+        logoutBtn.addEventListener('click', function (e) {
             e.preventDefault();
-            var resp = await apiFetch('/auth/logout', { method: 'POST' });
-            var data = await resp.json();
-            if (data.redirect) {
-                window.location.href = data.redirect;
-            }
+            apiFetch('/auth/logout', { method: 'POST' })
+                .then(function (resp) { return resp.json(); })
+                .then(function (data) {
+                    if (data.redirect) {
+                        window.location.href = data.redirect;
+                    }
+                });
         });
     }
 });
