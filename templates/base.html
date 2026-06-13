@@ -47,34 +47,8 @@
     <!-- Global CSRF token for all AJAX requests -->
     <meta name="csrf-token" content="{{ session.csrf_token or '' }}">
 
-    <script>
-        // Global CSRF token injection for all fetch/XHR requests
-        const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content || '';
-
-        // Helper to include CSRF token in all requests
-        async function apiFetch(url, options = {}) {
-            options.headers = options.headers || {};
-            options.headers['X-CSRF-Token'] = CSRF_TOKEN;
-            if (options.body && typeof options.body === 'string') {
-                try {
-                    const parsed = JSON.parse(options.body);
-                    parsed.csrf_token = CSRF_TOKEN;
-                    options.body = JSON.stringify(parsed);
-                } catch(e) {}
-            }
-            return fetch(url, options);
-        }
-
-        // Logout handler
-        document.getElementById('nav-logout')?.addEventListener('click', async (e) => {
-            e.preventDefault();
-            const resp = await apiFetch('/auth/logout', { method: 'POST' });
-            const data = await resp.json();
-            if (data.redirect) {
-                window.location.href = data.redirect;
-            }
-        });
-    </script>
+    <!-- Shared utilities (apiFetch, CSRF_TOKEN, logout) — external file to satisfy CSP -->
+    <script src="{{ url_for('static', filename='js/common.js') }}"></script>
 
     {% block scripts %}{% endblock %}
 </body>
