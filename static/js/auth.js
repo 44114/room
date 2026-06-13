@@ -258,7 +258,14 @@
                     body: JSON.stringify(data),
                 });
 
-                var result = await resp.json();
+                var result;
+                try {
+                    result = await resp.json();
+                } catch (jsonErr) {
+                    // Server returned non-JSON (usually a 500 error page)
+                    console.error('Server returned non-JSON response (HTTP ' + resp.status + ')');
+                    throw new Error('服务器错误 (HTTP ' + resp.status + ')，请检查服务器日志。');
+                }
 
                 if (!resp.ok) {
                     // Display the error
@@ -293,7 +300,9 @@
                 }
             } catch (err) {
                 console.error('Auth request failed:', err);
-                alert('网络错误，请稍后重试。');
+                // Show the actual error message instead of a generic one
+                var msg = (err && err.message) ? err.message : '网络错误，请稍后重试。';
+                alert(msg);
             } finally {
                 disableForm(false);
             }

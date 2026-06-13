@@ -17,7 +17,7 @@ import logging
 import os
 import sys
 
-from flask import Flask, render_template, session, redirect, url_for, flash
+from flask import Flask, render_template, session, redirect, url_for, flash, jsonify, request
 
 from config import Config
 from models import init_db
@@ -62,20 +62,26 @@ def create_app() -> Flask:
     app.register_blueprint(auth_bp)
     app.register_blueprint(files_bp)
 
-    # --- Error Handlers ---
+    # --- Error Handlers (return JSON for API routes, HTML for pages) ---
 
     @app.errorhandler(404)
     def not_found(e):
-        return render_template("404.html" if _template_exists("404.html") else error_response(404, "页面不存在")), 404
+        if _is_api_request():
+            return jsonify({"error": "接口不存在"}), 404
+        return f"<h1>404</h1><p>页面不存在</p>", 404
 
     @app.errorhandler(403)
     def forbidden(e):
-        return render_template("403.html" if _template_exists("403.html") else error_response(403, "无权访问")), 403
+        if _is_api_request():
+            return jsonify({"error": "无权访问"}), 403
+        return f"<h1>403</h1><p>无权访问</p>", 403
 
     @app.errorhandler(500)
     def server_error(e):
-        logger.exception("Internal server error")
-        return render_template("500.html" if _template_exists("500.html") else error_response(500, "服务器错误")), 500
+        logger.exception("Internal server error: %s", e)
+        if _is_api_request():
+            return jsonify({"error": "服务器内部错误，请检查服务器日志。"}), 500
+        return f"<h1>500</h1><p>服务器错误 — 请检查日志</p>", 500
 
     @app.errorhandler(413)
     def too_large(e):
@@ -117,15 +123,10 @@ def create_app() -> Flask:
     return app
 
 
-def error_response(code, message):
-    """Simple error response."""
-    return f"<h1>{code}</h1><p>{message}</p>"
-
-
-def _template_exists(name):
-    """Check if a template file exists."""
-    template_dir = os.path.join(os.path.dirname(__file__), "templates")
-    return os.path.exists(os.path.join(template_dir, name))
+def _is_api_request() -> bool:
+    """Check if the current request is to an API endpoint (expects JSON)."""
+    path = request.path
+    return path.startswith(("/auth/", "/files/", "/config"))
 
 
 # --- Main ---
