@@ -39,9 +39,31 @@ A secure, lightweight web-based instant messaging chat room built with **Python 
 | Human Verification | Cloudflare Turnstile |
 | Rate Limiting | Flask-Limiter |
 
-## 📦 Quick Start
+## 📦 Installation
 
-### Prerequisites
+Two methods are available. **Method 1 (script) is recommended** for most users.
+
+### Method 1: One-Click Setup Script (Recommended)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/44114/room/main/setup.sh -o setup.sh
+sudo bash setup.sh
+```
+
+The script interactively guides you through:
+- Installing system dependencies (Python, MySQL, nginx) for Ubuntu/Debian/CentOS/Arch
+- Creating the database and user
+- Deploying the chat server (and optionally the admin panel)
+- Configuring systemd for auto-start on boot
+- Generating secure random passwords and invite codes
+
+**Works on:** Ubuntu 20.04+, Debian 11+, CentOS 8+, RHEL 8+, Fedora 36+, Arch Linux.
+
+---
+
+### Method 2: Manual Installation (Advanced)
+
+#### Prerequisites
 
 - Python 3.10+
 - MySQL 8.0+ or MariaDB 10.11+
@@ -55,7 +77,7 @@ sudo apt install -y python3 python3-pip python3-venv mysql-server libmagic1
 brew install python mysql libmagic
 ```
 
-### Installation
+#### Steps
 
 ```bash
 # 1. Clone the repository
@@ -334,9 +356,31 @@ This project is provided for educational and personal use.
 | 人机验证 | Cloudflare Turnstile |
 | 速率限制 | Flask-Limiter |
 
-## 📦 快速开始
+## 📦 安装
 
-### 环境要求
+提供两种安装方式。**推荐大多数用户使用方法 1（一键脚本）**。
+
+### 方法 1：一键安装脚本（推荐）
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/44114/room/main/setup.sh -o setup.sh
+sudo bash setup.sh
+```
+
+脚本会交互式引导你完成：
+- 安装系统依赖（Python、MySQL、nginx），适配 Ubuntu/Debian/CentOS/Arch
+- 创建数据库和用户
+- 部署聊天服务器（可选同时安装管理面板）
+- 配置 systemd 开机自启
+- 自动生成安全随机密码和邀请码
+
+**支持的系统：** Ubuntu 20.04+、Debian 11+、CentOS 8+、RHEL 8+、Fedora 36+、Arch Linux。
+
+---
+
+### 方法 2：手动安装（高级）
+
+#### 环境要求
 
 - Python 3.10+
 - MySQL 8.0+ 或 MariaDB 10.11+
@@ -347,7 +391,7 @@ This project is provided for educational and personal use.
 sudo apt install -y python3 python3-pip python3-venv mysql-server libmagic1
 ```
 
-### 安装步骤
+#### 安装步骤
 
 ```bash
 # 1. 克隆仓库
@@ -529,9 +573,31 @@ SESSION_COOKIE_SECURE=True
 | 人機驗證 | Cloudflare Turnstile |
 | 速率限制 | Flask-Limiter |
 
-## 📦 快速開始
+## 📦 安裝
 
-### 環境要求
+提供兩種安裝方式。**推薦大多數使用者使用方法 1（一鍵指令碼）**。
+
+### 方法 1：一鍵安裝指令碼（推薦）
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/44114/room/main/setup.sh -o setup.sh
+sudo bash setup.sh
+```
+
+指令碼會互動式引導你完成：
+- 安裝系統依賴（Python、MySQL、nginx），適配 Ubuntu/Debian/CentOS/Arch
+- 建立資料庫和使用者
+- 部署聊天伺服器（可選同時安裝管理面板）
+- 設定 systemd 開機自啟
+- 自動生成安全隨機密碼和邀請碼
+
+**支援的系統：** Ubuntu 20.04+、Debian 11+、CentOS 8+、RHEL 8+、Fedora 36+、Arch Linux。
+
+---
+
+### 方法 2：手動安裝（進階）
+
+#### 環境要求
 
 - Python 3.10+
 - MySQL 8.0+ 或 MariaDB 10.11+
@@ -542,7 +608,7 @@ SESSION_COOKIE_SECURE=True
 sudo apt install -y python3 python3-pip python3-venv mysql-server libmagic1
 ```
 
-### 安裝步驟
+#### 安裝步驟
 
 ```bash
 # 1. 複製儲存庫
