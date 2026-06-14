@@ -70,14 +70,16 @@ def csrf_protect(f):
         session_token = session.get("csrf_token", "")
 
         if not token or not session_token:
-            logger.warning("CSRF: missing token (client=%s, session=%s)",
-                           bool(token), bool(session_token))
+            logger.warning("CSRF: missing token — client=%s session=%s path=%s",
+                           bool(token), bool(session_token), request.path)
             return jsonify({"error": "CSRF token missing"}), 403
 
         if not constant_time_compare(token, session_token):
-            logger.warning("CSRF: token mismatch")
+            logger.warning("CSRF: token mismatch — client=%s session=%s path=%s",
+                           token[:8], session_token[:8], request.path)
             return jsonify({"error": "CSRF token invalid"}), 403
 
+        logger.debug("CSRF: OK for %s", request.path)
         return f(*args, **kwargs)
 
     return decorated

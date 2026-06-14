@@ -92,12 +92,16 @@ def account_page():
 @validate_input
 def register():
     """Handle user registration."""
+    import time as _t
+    _t0 = _t.monotonic()
     data = g.get("clean_form") or g.get("clean_json") or {}
 
     username = sanitize_plain_text(data.get("username", "").strip())
     password = data.get("password", "")
     password_confirm = data.get("password_confirm", "")
     invite_code = data.get("invite_code", "").strip()
+
+    logger.info("[register] input parsed in %.3fs", _t.monotonic() - _t0)
 
     # --- Validation ---
     errors = []
@@ -115,11 +119,13 @@ def register():
         errors.append("请输入邀请码。")
 
     if errors:
+        logger.info("[register] validation failed in %.3fs: %s", _t.monotonic() - _t0, errors)
         return jsonify({"error": "；".join(errors)}), 400
 
-    # Verify invite code and create user in a single transaction
-    # to prevent race conditions on invite code usage
+    logger.info("[register] validation passed in %.3fs, connecting DB...", _t.monotonic() - _t0)
+    _t_db = _t.monotonic()
     conn = get_db_connection()
+    logger.info("[register] DB connected in %.3fs", _t.monotonic() - _t_db)
     try:
         with conn.cursor() as cursor:
             # Check username availability
@@ -128,13 +134,16 @@ def register():
                 (username,),
             )
             if cursor.fetchone():
+                logger.info("[register] username taken, returning 409")
                 return jsonify({"error": "用户名已被占用。"}), 409
 
             # Verify invite code within the transaction
             code_hash = hash_password(invite_code)
+            _t_lock = _t.monotonic()
             cursor.execute(
                 "SELECT id, code_hash FROM invite_codes WHERE used_by IS NULL FOR UPDATE"
             )
+            logger.info("[register] FOR UPDATE lock acquired in %.3fs", _t.monotonic() - _t_lock)
             unused = cursor.fetchall()
 
             code_valid = False
@@ -144,6 +153,7 @@ def register():
                     break
 
             if not code_valid:
+                logger.info("[register] invalid invite code, returning 400")
                 return jsonify({"error": "邀请码无效或已被使用。"}), 400
 
             # Create user
@@ -162,18 +172,24 @@ def register():
                 (user_id,),
             )
 
+        _t_commit = _t.monotonic()
         conn.commit()
+        logger.info("[register] DB commit in %.3fs, total DB %.3fs",
+            _t.monotonic() - _t_commit, _t.monotonic() - _t_db)
     except Exception as e:
         conn.rollback()
-        logger.error("Registration failed: %s", e)
+        logger.exception("[register] DB error after %.3fs", _t.monotonic() - _t0)
         return jsonify({"error": "注册失败，请稍后重试。"}), 500
     finally:
         conn.close()
 
     # Auto-login
+    _t_session = _t.monotonic()
     _create_session(user_id, username, request)
+    logger.info("[register] session created in %.3fs", _t.monotonic() - _t_session)
 
-    logger.info("User %s (id=%d) registered successfully.", username, user_id)
+    logger.info("[register] User %s (id=%d) registered OK — total %.3fs",
+        username, user_id, _t.monotonic() - _t0)
     return jsonify({"success": True, "redirect": url_for("chat_page")}), 201
 
 
@@ -182,6 +198,8 @@ def register():
 @validate_input
 def login():
     """Handle user login."""
+    import time as _t
+    _t0 = _t.monotonic()
     data = g.get("clean_form") or g.get("clean_json") or {}
 
     username = sanitize_plain_text(data.get("username", "").strip())
@@ -195,13 +213,18 @@ def login():
         errors.append("请输入密码。")
 
     if errors:
+        logger.info("[login] validation failed in %.3fs: %s", _t.monotonic() - _t0, errors)
         return jsonify({"error": "；".join(errors)}), 400
 
-    # Rate limiting: delay response to slow brute force
-    import time
-    time.sleep(0.5)
+    logger.info("[login] validation passed in %.3fs, connecting DB...", _t.monotonic() - _t0)
 
+    # Rate limiting: delay response to slow brute force
+    import time as _time
+    _time.sleep(0.5)
+
+    _t_db = _t.monotonic()
     conn = get_db_connection()
+    logger.info("[login] DB connected in %.3fs", _t.monotonic() - _t_db)
     try:
         with conn.cursor() as cursor:
             cursor.execute(
@@ -209,21 +232,25 @@ def login():
                 (username,),
             )
             user = cursor.fetchone()
+            logger.info("[login] user query done in %.3fs", _t.monotonic() - _t_db)
 
         if not user:
-            # Constant-time compare against a dummy hash to mask timing
             verify_password(password, "$argon2id$v=19$m=65536,t=3,p=4$dummy$dummy")
+            logger.info("[login] user not found, returning 401 (%.3fs)", _t.monotonic() - _t0)
             return jsonify({"error": "用户名或密码错误。"}), 401
 
         if not verify_password(password, user["password_hash"]):
+            logger.info("[login] wrong password, returning 401 (%.3fs)", _t.monotonic() - _t0)
             return jsonify({"error": "用户名或密码错误。"}), 401
 
     finally:
         conn.close()
 
+    _t_session = _t.monotonic()
     _create_session(user["id"], user["username"], request, remember_me)
+    logger.info("[login] session created in %.3fs", _t.monotonic() - _t_session)
 
-    logger.info("User %s logged in.", username)
+    logger.info("[login] User %s logged in OK — total %.3fs", username, _t.monotonic() - _t0)
     return jsonify({"success": True, "redirect": url_for("chat_page")}), 200
 
 

@@ -51,6 +51,25 @@ def create_app() -> Flask:
     app.config["SESSION_COOKIE_SECURE"] = Config.SESSION_COOKIE_SECURE
     app.config["PERMANENT_SESSION_LIFETIME"] = Config.PERMANENT_SESSION_LIFETIME
 
+    # --- Request logging (DEBUG) — before all routes ---
+    import time as _time
+    @app.before_request
+    def _log_request_start():
+        g._req_start = _time.monotonic()
+        logger.info("▶ %s %s from %s (X-Fwd-Proto=%s X-Fwd-Port=%s Content-Type=%s)",
+            request.method, request.full_path,
+            request.remote_addr,
+            request.headers.get("X-Forwarded-Proto", "-"),
+            request.headers.get("X-Forwarded-Port", "-"),
+            request.headers.get("Content-Type", "-"))
+
+    @app.after_request
+    def _log_request_end(response):
+        elapsed = _time.monotonic() - g.pop("_req_start", _time.monotonic())
+        logger.info("◀ %s %s → %s in %.3fs",
+            request.method, request.full_path, response.status_code, elapsed)
+        return response
+
     # --- Security Middleware ---
     setup_security_headers(app)
     setup_csrf(app)

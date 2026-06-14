@@ -241,7 +241,9 @@ def get_db_connection() -> "pymysql.Connection":
     Sets connect/read/write timeouts so a slow or locked MySQL server
     cannot block the Flask worker indefinitely.
     """
+    import time as _t
     import pymysql
+    _t0 = _t.monotonic()
     conn = pymysql.connect(
         host=Config.MYSQL_HOST,
         port=Config.MYSQL_PORT,
@@ -255,6 +257,7 @@ def get_db_connection() -> "pymysql.Connection":
         read_timeout=10,
         write_timeout=10,
     )
+    logger.debug("pymysql.connect took %.3fs", _t.monotonic() - _t0)
     # Prevent SELECT ... FOR UPDATE from waiting > 8 seconds for a row lock
     with conn.cursor() as cur:
         cur.execute("SET SESSION innodb_lock_wait_timeout = 8")
