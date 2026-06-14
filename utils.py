@@ -227,7 +227,7 @@ def verify_turnstile(token: str, remote_ip: str = "") -> bool:
                 "response": token,
                 "remoteip": remote_ip,
             },
-            timeout=10,
+            timeout=Config.TURNSTILE_TIMEOUT,
         )
         result = resp.json()
         return bool(result.get("success", False))

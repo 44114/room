@@ -37,6 +37,10 @@ class Config:
     ALIAS_PROTOCOL: str = os.environ.get("ALIAS_PROTOCOL", "http")
     ALIAS_PORT: int = int(os.environ.get("ALIAS_PORT") or os.environ.get("PORT", "9888"))
 
+    # Turnstile API timeout (seconds). Lower = faster fallback to test-key
+    # bypass when Cloudflare is unreachable. Keep short.
+    TURNSTILE_TIMEOUT: int = int(os.environ.get("TURNSTILE_TIMEOUT", "3"))
+
     # Mobile clients have poor Turnstile pass rates due to WebView fingerprinting.
     # Since invite codes already provide a strong anti-bot gate, Turnstile can
     # be exempted for mobile clients. Set to True to enforce Turnstile on mobile too.

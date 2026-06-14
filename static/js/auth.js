@@ -302,8 +302,11 @@
                 console.error('Auth request failed:', err);
                 var msg;
                 if (err && err.name === 'AbortError') {
-                    msg = '请求超时 — 服务器无响应，请检查服务器是否正常运行 (http://' +
-                          window.location.hostname + ':9888)。';
+                    msg = '请求超时 — 服务器无响应。\n' +
+                          '当前访问地址: ' + window.location.protocol + '//' +
+                          window.location.hostname +
+                          (window.location.port ? ':' + window.location.port : '') + '\n' +
+                          '请检查服务器是否正常运行，以及 .env 中 ALIAS_PROTOCOL/ALIAS_PORT 是否与反向代理配置一致。';
                 } else if (err && err.message) {
                     msg = err.message;
                 } else {
