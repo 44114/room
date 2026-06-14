@@ -186,6 +186,20 @@ deploy_project() {
         pip install --quiet -r requirements.txt
     fi
 
+    # Ask about reverse proxy configuration
+    echo ""
+    ask "Will this server be behind Nginx with HTTPS? (Y/n):"
+    read -r USE_HTTPS
+    USE_HTTPS="${USE_HTTPS:-y}"
+    if [[ "$USE_HTTPS" =~ ^[Yy]$ ]]; then
+        ALIAS_PROTO="https"
+        ALIAS_PRT="443"
+    else
+        ALIAS_PROTO="http"
+        ALIAS_PRT="9888"
+        warn "Running without HTTPS — session cookies will be transmitted in plaintext."
+    fi
+
     # Create upload directory
     mkdir -p uploads && chmod 750 uploads
 
@@ -197,6 +211,8 @@ deploy_project() {
     cat > .env <<EOF
 # Chat Room Server Configuration
 SECRET_KEY=$SECRET_KEY
+ALIAS_PROTOCOL=$ALIAS_PROTO
+ALIAS_PORT=$ALIAS_PRT
 MYSQL_HOST=127.0.0.1
 MYSQL_PORT=3306
 MYSQL_DB=$DB_NAME

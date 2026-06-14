@@ -14,6 +14,8 @@ from functools import wraps
 from flask import request, session, make_response, jsonify, current_app, g
 
 from config import Config
+
+from config import Config
 from utils import generate_csrf_token, constant_time_compare, sanitize_html
 
 logger = logging.getLogger(__name__)
@@ -159,3 +161,39 @@ def rate_limit_config(app):
     except ImportError:
         logger.warning("flask-limiter not installed; rate limiting disabled.")
         return None
+
+
+def setup_proxy_fix(app):
+    """Configure Flask to respect ALIAS_PROTOCOL / ALIAS_PORT.
+
+    When Flask runs behind Nginx, it sees the internal HTTP connection
+    (e.g. http://127.0.0.1:9888) instead of the public URL
+    (e.g. https://chat.example.com). This causes url_for() to generate
+    wrong URLs, cookies to lack the Secure flag, and WebSocket origins
+    to mismatch.
+
+    This before_request hook overrides the WSGI environ so Flask
+    generates correct public URLs regardless of the internal setup.
+
+    Also respects standard X-Forwarded-* headers set by Nginx.
+    """
+
+    @app.before_request
+    def _fix_scheme_and_port():
+        # X-Forwarded-Proto (standard — set by all reverse proxies)
+        fwd_proto = request.headers.get("X-Forwarded-Proto", "").lower()
+        if fwd_proto in ("http", "https"):
+            request.environ["wsgi.url_scheme"] = fwd_proto
+        elif Config.ALIAS_PROTOCOL != "http":
+            request.environ["wsgi.url_scheme"] = Config.ALIAS_PROTOCOL
+
+        # X-Forwarded-Port or ALIAS_PORT
+        fwd_port = request.headers.get("X-Forwarded-Port", "")
+        if fwd_port and fwd_port.isdigit():
+            request.environ["SERVER_PORT"] = fwd_port
+        elif Config.ALIAS_PORT != Config.PORT:
+            request.environ["SERVER_PORT"] = str(Config.ALIAS_PORT)
+
+        # Also patch url_for to prefer the alias scheme
+        if Config.ALIAS_PROTOCOL == "https":
+            app.config["PREFERRED_URL_SCHEME"] = "https"

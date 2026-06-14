@@ -29,6 +29,14 @@ class Config:
     # Invite code — raw value from env, stored as Argon2id hash in DB
     INVITE_CODE: str = os.environ.get("INVITE_CODE", "changeme")
 
+    # ── Reverse-proxy / public-facing configuration ──────────────
+    # Flask internally listens on HTTP:9888, but may be exposed to the
+    # internet via Nginx on HTTPS:443. Set these to tell Flask what the
+    # PUBLIC URL looks like, so it generates correct redirects and
+    # WebSocket URLs. Also used for Cookie security flags.
+    ALIAS_PROTOCOL: str = os.environ.get("ALIAS_PROTOCOL", "http")
+    ALIAS_PORT: int = int(os.environ.get("ALIAS_PORT", str(PORT)))
+
     # Mobile clients have poor Turnstile pass rates due to WebView fingerprinting.
     # Since invite codes already provide a strong anti-bot gate, Turnstile can
     # be exempted for mobile clients. Set to True to enforce Turnstile on mobile too.
@@ -36,8 +44,8 @@ class Config:
         "TURNSTILE_REQUIRED_FOR_MOBILE", "0"
     ) == "1"
 
-    # Session security
-    SESSION_COOKIE_SECURE: bool = False  # HTTP, not HTTPS
+    # Session security — Secure flag auto-derived from ALIAS_PROTOCOL
+    SESSION_COOKIE_SECURE: bool = ALIAS_PROTOCOL == "https"
     SESSION_COOKIE_HTTPONLY: bool = True
     SESSION_COOKIE_SAMESITE: str = "Lax"
     PERMANENT_SESSION_LIFETIME: int = 1800  # 30 minutes idle timeout

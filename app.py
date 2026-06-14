@@ -21,7 +21,7 @@ from flask import Flask, render_template, session, redirect, url_for, flash, jso
 
 from config import Config
 from models import init_db
-from middleware import setup_security_headers, setup_csrf, rate_limit_config
+from middleware import setup_security_headers, setup_csrf, setup_proxy_fix, rate_limit_config
 from auth import auth_bp
 from files import files_bp
 from chat import init_socketio
@@ -54,6 +54,7 @@ def create_app() -> Flask:
     # --- Security Middleware ---
     setup_security_headers(app)
     setup_csrf(app)
+    setup_proxy_fix(app)  # must be after security headers, before routes
 
     # --- Rate Limiting ---
     limiter = rate_limit_config(app)
