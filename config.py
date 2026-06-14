@@ -35,7 +35,7 @@ class Config:
     # PUBLIC URL looks like, so it generates correct redirects and
     # WebSocket URLs. Also used for Cookie security flags.
     ALIAS_PROTOCOL: str = os.environ.get("ALIAS_PROTOCOL", "http")
-    ALIAS_PORT: int = int(os.environ.get("ALIAS_PORT", str(PORT)))
+    ALIAS_PORT: int = int(os.environ.get("ALIAS_PORT") or os.environ.get("PORT", "9888"))
 
     # Mobile clients have poor Turnstile pass rates due to WebView fingerprinting.
     # Since invite codes already provide a strong anti-bot gate, Turnstile can
