@@ -17,6 +17,7 @@ from flask import (
 from config import Config
 from middleware import csrf_protect, validate_input, get_or_create_csrf_token
 from utils import (
+    generate_csrf_token,
     get_db_connection,
     hash_password,
     verify_password,

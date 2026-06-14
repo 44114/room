@@ -236,9 +236,13 @@ def require_json(f):
 
 
 def get_db_connection() -> "pymysql.Connection":
-    """Create and return a PyMySQL database connection."""
+    """Create and return a PyMySQL database connection.
+
+    Sets connect/read/write timeouts so a slow or locked MySQL server
+    cannot block the Flask worker indefinitely.
+    """
     import pymysql
-    return pymysql.connect(
+    conn = pymysql.connect(
         host=Config.MYSQL_HOST,
         port=Config.MYSQL_PORT,
         user=Config.MYSQL_USER,
@@ -247,4 +251,11 @@ def get_db_connection() -> "pymysql.Connection":
         charset="utf8mb4",
         cursorclass=pymysql.cursors.DictCursor,
         autocommit=False,
+        connect_timeout=5,
+        read_timeout=10,
+        write_timeout=10,
     )
+    # Prevent SELECT ... FOR UPDATE from waiting > 8 seconds for a row lock
+    with conn.cursor() as cur:
+        cur.execute("SET SESSION innodb_lock_wait_timeout = 8")
+    return conn

@@ -14,8 +14,6 @@ from functools import wraps
 from flask import request, session, make_response, jsonify, current_app, g
 
 from config import Config
-
-from config import Config
 from utils import generate_csrf_token, constant_time_compare, sanitize_html
 
 logger = logging.getLogger(__name__)
