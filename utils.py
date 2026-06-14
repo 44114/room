@@ -20,6 +20,7 @@ import uuid
 from functools import wraps
 
 import bleach
+import gevent
 import magic
 import requests
 from argon2 import PasswordHasher
@@ -214,25 +215,31 @@ def constant_time_compare(a: str, b: str) -> bool:
 def verify_turnstile(token: str, remote_ip: str = "") -> bool:
     """
     Verify a Cloudflare Turnstile token server-side.
-    Uses test keys that always pass during development.
+
+    Wrapped in gevent.Timeout because monkey-patched sockets can
+    deadlock when a middlebox silently drops TCP SYNs (e.g. GFW
+    blocking egress to Cloudflare API). gevent.Timeout kills the
+    greenlet unconditionally, preventing the entire worker from
+    hanging indefinitely.
     """
     if not token:
         return False
 
     try:
-        resp = requests.post(
-            "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-            data={
-                "secret": Config.TURNSTILE_SECRET_KEY,
-                "response": token,
-                "remoteip": remote_ip,
-            },
-            timeout=Config.TURNSTILE_TIMEOUT,
-        )
-        result = resp.json()
-        return bool(result.get("success", False))
-    except requests.RequestException as e:
-        logger.error("Turnstile verification request failed: %s", e)
+        with gevent.Timeout(Config.TURNSTILE_TIMEOUT, exception=False):
+            resp = requests.post(
+                "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+                data={
+                    "secret": Config.TURNSTILE_SECRET_KEY,
+                    "response": token,
+                    "remoteip": remote_ip,
+                },
+                timeout=Config.TURNSTILE_TIMEOUT,
+            )
+            result = resp.json()
+            return bool(result.get("success", False))
+    except (gevent.Timeout, requests.RequestException) as e:
+        logger.error("Turnstile verification bypassed (API unreachable): %s", e)
         # In development with test keys, fall back to lenient mode
         if "1x00000000000000000000AA" in Config.TURNSTILE_SITE_KEY:
             return True
