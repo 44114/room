@@ -66,6 +66,7 @@ def csrf_protect(f):
         if request.method in ("GET", "HEAD", "OPTIONS"):
             return f(*args, **kwargs)
 
+        import time as _t; _t0 = _t.monotonic()
         token = request.headers.get("X-CSRF-Token") or request.form.get("csrf_token")
         session_token = session.get("csrf_token", "")
 
@@ -79,7 +80,7 @@ def csrf_protect(f):
                            token[:8], session_token[:8], request.path)
             return jsonify({"error": "CSRF token invalid"}), 403
 
-        logger.debug("CSRF: OK for %s", request.path)
+        logger.info("csrf_protect OK in %.4fs for %s", _t.monotonic() - _t0, request.path)
         return f(*args, **kwargs)
 
     return decorated
@@ -96,6 +97,7 @@ def validate_input(f):
 
     @wraps(f)
     def decorated(*args, **kwargs):
+        import time as _t; _t0 = _t.monotonic()
         # Sanitize form data
         if request.form:
             sanitized = {}
@@ -122,6 +124,7 @@ def validate_input(f):
                     sanitized[key] = value
             g.clean_json = sanitized
 
+        logger.info("validate_input took %.4fs", _t.monotonic() - _t0)
         return f(*args, **kwargs)
 
     return decorated
@@ -132,8 +135,10 @@ def setup_csrf(app):
 
     @app.before_request
     def ensure_csrf_token():
+        import time as _t; _t0 = _t.monotonic()
         if "csrf_token" not in session:
             session["csrf_token"] = generate_csrf_token()
+        logger.info("ensure_csrf_token took %.4fs", _t.monotonic() - _t0)
 
     @app.after_request
     def set_csrf_cookie(response):
@@ -180,6 +185,7 @@ def setup_proxy_fix(app):
 
     @app.before_request
     def _fix_scheme_and_port():
+        import time as _t; _t0 = _t.monotonic()
         # X-Forwarded-Proto (standard — set by all reverse proxies)
         fwd_proto = request.headers.get("X-Forwarded-Proto", "").lower()
         if fwd_proto in ("http", "https"):
@@ -197,3 +203,4 @@ def setup_proxy_fix(app):
         # Also patch url_for to prefer the alias scheme
         if Config.ALIAS_PROTOCOL == "https":
             app.config["PREFERRED_URL_SCHEME"] = "https"
+        logger.info("_fix_scheme_and_port took %.4fs", _t.monotonic() - _t0)
