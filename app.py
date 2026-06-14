@@ -17,7 +17,7 @@ import logging
 import os
 import sys
 
-from flask import Flask, render_template, session, redirect, url_for, flash, jsonify, request
+from flask import Flask, g, render_template, session, redirect, url_for, flash, jsonify, request
 
 from config import Config
 from models import init_db
