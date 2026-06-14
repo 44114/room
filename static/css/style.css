@@ -226,11 +226,6 @@ a:hover { text-decoration: underline; }
 .check-label { display: flex !important; align-items: center; gap: 0.5rem; cursor: pointer; font-weight: 400 !important; }
 .check-label input[type="checkbox"] { width: 1.1rem; height: 1.1rem; cursor: pointer; }
 
-.turnstile-group {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
 
 /* === Buttons === */
 .btn {

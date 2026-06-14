@@ -20,12 +20,6 @@ class Config:
     MYSQL_PASSWORD: str = os.environ.get("MYSQL_PASSWORD", "")
     MYSQL_DB: str = os.environ.get("MYSQL_DB", "chatroom")
 
-    # Cloudflare Turnstile
-    TURNSTILE_SITE_KEY: str = os.environ.get("TURNSTILE_SITE_KEY", "1x00000000000000000000AA")
-    TURNSTILE_SECRET_KEY: str = os.environ.get(
-        "TURNSTILE_SECRET_KEY", "1x0000000000000000000000000000000AA"
-    )
-
     # Invite code — raw value from env, stored as Argon2id hash in DB
     INVITE_CODE: str = os.environ.get("INVITE_CODE", "changeme")
 
@@ -36,17 +30,6 @@ class Config:
     # WebSocket URLs. Also used for Cookie security flags.
     ALIAS_PROTOCOL: str = os.environ.get("ALIAS_PROTOCOL", "http")
     ALIAS_PORT: int = int(os.environ.get("ALIAS_PORT") or os.environ.get("PORT", "9888"))
-
-    # Turnstile API timeout (seconds). Lower = faster fallback to test-key
-    # bypass when Cloudflare is unreachable. Keep short.
-    TURNSTILE_TIMEOUT: int = int(os.environ.get("TURNSTILE_TIMEOUT", "3"))
-
-    # Mobile clients have poor Turnstile pass rates due to WebView fingerprinting.
-    # Since invite codes already provide a strong anti-bot gate, Turnstile can
-    # be exempted for mobile clients. Set to True to enforce Turnstile on mobile too.
-    TURNSTILE_REQUIRED_FOR_MOBILE: bool = os.environ.get(
-        "TURNSTILE_REQUIRED_FOR_MOBILE", "0"
-    ) == "1"
 
     # Session security — Secure flag auto-derived from ALIAS_PROTOCOL
     SESSION_COOKIE_SECURE: bool = ALIAS_PROTOCOL == "https"

@@ -1,47 +1,11 @@
 /**
  * Authentication helpers for register.html and login.html
  * - Client-side validation
- * - Cloudflare Turnstile integration
  * - Form submission with CSRF protection
  */
 
 (function () {
     'use strict';
-
-    // --- Turnstile Callbacks ---
-    let turnstileVerified = false;
-
-    window.onTurnstileSuccess = function (token) {
-        turnstileVerified = true;
-        const err = document.getElementById('turnstile-error');
-        if (err) err.classList.remove('visible');
-        updateSubmitButton();
-    };
-
-    window.onTurnstileExpired = function () {
-        turnstileVerified = false;
-        updateSubmitButton();
-    };
-
-    window.onTurnstileError = function () {
-        turnstileVerified = false;
-        const err = document.getElementById('turnstile-error');
-        if (err) {
-            err.textContent = '人机验证失败，请刷新页面重试。';
-            err.classList.add('visible');
-        }
-    };
-
-    function updateSubmitButton() {
-        const submitBtn = document.getElementById('submit-btn');
-        if (!submitBtn) return;
-
-        // For register page, also check invite code
-        const inviteCode = document.getElementById('invite-code');
-        const inviteOk = !inviteCode || inviteCode.value.trim().length > 0;
-
-        submitBtn.disabled = !turnstileVerified || !inviteOk;
-    }
 
     // --- Password Strength Meter ---
     function updatePasswordStrength(password, barId, textId) {
@@ -97,9 +61,6 @@
     document.querySelectorAll('.auth-form input').forEach(function (input) {
         input.addEventListener('input', function () {
             clearError(this.id);
-            if (this.id === 'invite-code') {
-                updateSubmitButton();
-            }
         });
     });
 
@@ -176,11 +137,6 @@
             valid = false;
         }
 
-        if (!turnstileVerified) {
-            showError('turnstile', '请完成人机验证');
-            valid = false;
-        }
-
         return valid;
     }
 
@@ -195,10 +151,6 @@
         }
         if (!password) {
             showError('password', '请输入密码');
-            valid = false;
-        }
-        if (!turnstileVerified) {
-            showError('turnstile', '请完成人机验证');
             valid = false;
         }
 
@@ -289,12 +241,6 @@
                         });
                         flashArea.appendChild(flashDiv);
                     }
-                    // Reset Turnstile
-                    turnstileVerified = false;
-                    if (window.turnstile) {
-                        window.turnstile.reset();
-                    }
-                    updateSubmitButton();
                 } else if (result.redirect) {
                     window.location.href = result.redirect;
                 }

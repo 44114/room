@@ -92,13 +92,9 @@ def create_app() -> Flask:
 
     @app.route("/config")
     def public_config():
-        """Return non-sensitive configuration needed by clients.
-        The Turnstile site key IS public — it appears in the web page HTML.
-        The secret key remains server-side only, never exposed."""
+        """Return non-sensitive public configuration for clients."""
         from flask import jsonify
         return jsonify({
-            "turnstile_site_key": Config.TURNSTILE_SITE_KEY,
-            "turnstile_required_for_mobile": Config.TURNSTILE_REQUIRED_FOR_MOBILE,
             "max_file_size": Config.MAX_FILE_SIZE,
             "chunk_size": Config.CHUNK_SIZE,
             "allowed_mimetypes": sorted(Config.ALLOWED_MIMETYPES),
@@ -143,7 +139,7 @@ if __name__ == "__main__":
         )
         logger.warning(
             "生产环境请设置：MYSQL_HOST MYSQL_USER MYSQL_PASSWORD MYSQL_DB "
-            "TURNSTILE_SITE_KEY TURNSTILE_SECRET_KEY INVITE_CODE SECRET_KEY"
+            "INVITE_CODE SECRET_KEY"
         )
 
     app = create_app()

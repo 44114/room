@@ -10,7 +10,6 @@
 
 # 💬 Chat Room — Real-Time Instant Messaging
 
-A secure, lightweight web-based instant messaging chat room built with **Python Flask**, **MySQL**, and vanilla **HTML/CSS/JavaScript**. Features real-time messaging via WebSocket, chunked file transfers up to 4 GB, Cloudflare Turnstile human verification, and Argon2id password hashing.
 
 > 🤖 **Developed with assistance from [Claude Code](https://claude.ai/code) (Anthropic)**
 
@@ -18,7 +17,7 @@ A secure, lightweight web-based instant messaging chat room built with **Python 
 
 ## ✨ Features
 
-- **User Authentication** — Register with invite code + Cloudflare Turnstile verification; login with "Remember Me" support
+- **User Authentication** — Register with invite code; login with "Remember Me" support
 - **Real-Time Chat** — WebSocket (SocketIO) for instant text messaging with typing indicators
 - **File Sharing** — Chunked upload/download up to 4 GB per file (5 MB chunks), drag-and-drop support
 - **Account Management** — Change password, delete account (soft-delete), secure logout
@@ -36,7 +35,6 @@ A secure, lightweight web-based instant messaging chat room built with **Python 
 | Password Hashing | Argon2id (argon2-cffi) |
 | XSS Prevention | Bleach |
 | MIME Detection | python-magic |
-| Human Verification | Cloudflare Turnstile |
 | Rate Limiting | Flask-Limiter |
 
 ## 📦 Installation
@@ -206,7 +204,6 @@ SESSION_COOKIE_SECURE=True   # Only send cookies over HTTPS
 
 > **Important:** Once behind HTTPS, set `SESSION_COOKIE_SECURE=True` in `.env` so session cookies are never transmitted over plain HTTP. All WebSocket connections will automatically upgrade to `wss://`.
 >
-> If Cloudflare is used as a CDN in front, ensure the SSL/TLS mode is set to **Full (strict)** and enable **WebSocket** support in the Network settings.
 
 ## ⚙️ Environment Variables
 
@@ -221,11 +218,8 @@ Copy `.env.example` to `.env` and configure:
 | `MYSQL_PORT` | | MySQL port (default: `3306`) |
 | `MYSQL_USER` | | MySQL user (default: `chatroom`) |
 | `MYSQL_DB` | | Database name (default: `chatroom`) |
-| `TURNSTILE_SITE_KEY` | | Cloudflare Turnstile site key |
-| `TURNSTILE_SECRET_KEY` | | Cloudflare Turnstile secret key |
 | `FLASK_DEBUG` | | Set to `1` for development mode |
 
-> **Note:** Turnstile defaults to Cloudflare's test keys in development (always pass).
 
 ## 📁 Project Structure
 
@@ -276,8 +270,8 @@ room/
 
 | Method | Path | Auth | Description |
 |--------|------|:----:|-------------|
-| `POST` | `/auth/register` | No | Register (invite code + Turnstile) |
-| `POST` | `/auth/login` | No | Login (Turnstile + remember me) |
+| `POST` | `/auth/register` | No | Register (invite code required) |
+| `POST` | `/auth/login` | No | Login (with "Remember Me" support) |
 | `POST` | `/auth/logout` | Yes | Logout |
 | `GET` | `/auth/check` | Any | Check login status |
 | `POST` | `/auth/change-password` | Yes | Change password |
@@ -329,13 +323,12 @@ This project is provided for educational and personal use.
 
 # 💬 聊天室 — 即时通讯
 
-一个安全、轻量的网页版即时通讯聊天室，基于 **Python Flask**、**MySQL** 和原生 **HTML/CSS/JavaScript** 构建。支持 WebSocket 实时消息、最大 4 GB 分块文件传输、Cloudflare Turnstile 人机验证以及 Argon2id 密码哈希。
 
 > 🤖 **本项目由 [Claude Code](https://claude.ai/code) (Anthropic) 辅助开发**
 
 ## ✨ 功能
 
-- **用户认证** — 邀请码 + Cloudflare Turnstile 人机验证注册；支持"记住我"登录
+- **用户认证** — 邀请码注册；支持"记住我"登录
 - **实时聊天** — 基于 WebSocket (SocketIO) 即时消息，支持输入状态提示
 - **文件共享** — 分块上传/下载最大 4 GB 文件 (每块 5 MB)，支持拖放
 - **账号管理** — 修改密码、注销账号 (软删除)、安全退出
@@ -353,7 +346,6 @@ This project is provided for educational and personal use.
 | 密码哈希 | Argon2id (argon2-cffi) |
 | XSS 防护 | Bleach |
 | MIME 检测 | python-magic |
-| 人机验证 | Cloudflare Turnstile |
 | 速率限制 | Flask-Limiter |
 
 ## 📦 安装
@@ -431,8 +423,6 @@ python app.py
 | `SECRET_KEY` | ✅ | Flask 会话签名密钥 |
 | `MYSQL_PASSWORD` | ✅ | MySQL 数据库密码 |
 | `INVITE_CODE` | ✅ | 注册所需邀请码 |
-| `TURNSTILE_SITE_KEY` | | Turnstile 站点密钥 (开发可用测试密钥) |
-| `TURNSTILE_SECRET_KEY` | | Turnstile 密钥 |
 | `FLASK_DEBUG` | | 设为 `1` 启用调试模式 |
 
 ## 🔒 安全措施
@@ -531,7 +521,6 @@ SESSION_COOKIE_SECURE=True
 ```
 
 > **重要：** 启用 HTTPS 后必须设置 `SESSION_COOKIE_SECURE=True`。WebSocket 会自动升级为 `wss://`。
-> 如使用 Cloudflare CDN，请将 SSL/TLS 模式设为 **Full (strict)** 并启用 WebSocket。
 
 ## 🔗 关联项目
 
@@ -546,13 +535,12 @@ SESSION_COOKIE_SECURE=True
 
 # 💬 聊天室 — 即時通訊
 
-一個安全、輕量的網頁版即時通訊聊天室，基於 **Python Flask**、**MySQL** 和原生 **HTML/CSS/JavaScript** 建構。支援 WebSocket 即時訊息、最大 4 GB 分塊檔案傳輸、Cloudflare Turnstile 人機驗證以及 Argon2id 密碼雜湊。
 
 > 🤖 **本專案由 [Claude Code](https://claude.ai/code) (Anthropic) 輔助開發**
 
 ## ✨ 功能
 
-- **使用者認證** — 邀請碼 + Cloudflare Turnstile 人機驗證註冊；支援「記住我」登入
+- **使用者認證** — 邀請碼註冊；支援「記住我」登入
 - **即時聊天** — 基於 WebSocket (SocketIO) 即時訊息，支援輸入狀態提示
 - **檔案分享** — 分塊上傳/下載最大 4 GB 檔案 (每塊 5 MB)，支援拖放
 - **帳號管理** — 修改密碼、註銷帳號 (軟刪除)、安全登出
@@ -570,7 +558,6 @@ SESSION_COOKIE_SECURE=True
 | 密碼雜湊 | Argon2id (argon2-cffi) |
 | XSS 防護 | Bleach |
 | MIME 檢測 | python-magic |
-| 人機驗證 | Cloudflare Turnstile |
 | 速率限制 | Flask-Limiter |
 
 ## 📦 安裝
@@ -648,8 +635,6 @@ python app.py
 | `SECRET_KEY` | ✅ | Flask 工作階段簽名金鑰 |
 | `MYSQL_PASSWORD` | ✅ | MySQL 資料庫密碼 |
 | `INVITE_CODE` | ✅ | 註冊所需邀請碼 |
-| `TURNSTILE_SITE_KEY` | | Turnstile 站點金鑰 (開發可用測試金鑰) |
-| `TURNSTILE_SECRET_KEY` | | Turnstile 密鑰 |
 | `FLASK_DEBUG` | | 設為 `1` 啟用除錯模式 |
 
 ## 🔒 安全措施
@@ -748,7 +733,6 @@ SESSION_COOKIE_SECURE=True
 ```
 
 > **重要：** 啟用 HTTPS 後必須設定 `SESSION_COOKIE_SECURE=True`。WebSocket 會自動升級為 `wss://`。
-> 如使用 Cloudflare CDN，請將 SSL/TLS 模式設為 **Full (strict)** 並啟用 WebSocket。
 
 ## 🔗 關聯專案
 

@@ -41,10 +41,10 @@ def setup_security_headers(app):
         # Content Security Policy
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
-            "script-src 'self' https://challenges.cloudflare.com https://cdn.socket.io; "
+            "script-src 'self' https://cdn.socket.io; "
             "style-src 'self' 'unsafe-inline'; "
             "img-src 'self' data: blob:; "
-            "frame-src https://challenges.cloudflare.com; "
+            "frame-src 'self'; "
             "connect-src 'self' ws: wss:; "
             "media-src 'self'; "
             "font-src 'self'"
